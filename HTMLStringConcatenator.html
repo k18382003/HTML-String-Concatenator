@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <style>
+      .edit-area {
+        display: flex;
+        flex-direction: row;
+      }
+
+      #htmlSyntax {
+        width: 50%;
+      }
+
+      #output {
+        width: 50%;
+        margin-left: 10px;
+        height: 300px;
+        overflow: scroll;
+        border: 1px black solid;
+      }
+
+      .buttons-container {
+        display: flex;
+        flex-direction: row;
+      }
+
+      .buttons {
+        width: 50%;
+      }
+    </style>
+    <p>Paste your HTML syntax:</p>
+    <div class="edit-area">
+      <textarea id="htmlSyntax" rows="20"></textarea>
+      <textarea id="output" rows="20" readonly></textarea>
+      <!-- <div id="output"></div> -->
+    </div>
+    <div class="buttons-container">
+      <div class="buttons">
+        <button onclick="ConvertAndShowOutPut()">Convert</button>
+      </div>
+      <div class="buttons">
+        <button onclick="copyOutPut()">Copy</button>
+      </div>
+    </div>
+  </body>
+  <script>
+    function minifyHTML(html, opts = {}) {
+      const options = {
+        removeComments: true,
+        collapseWhitespace: true,
+        preserveTags: ['pre', 'code', 'textarea'],
+        ...opts,
+      };
+
+      if (!html || typeof html !== 'string') return '';
+
+      // 1) Pull out content that must be preserved (pre/code/textarea)
+      const preserved = [];
+      const tagGroup = options.preserveTags
+        .join('|')
+        .replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const preserveRe = new RegExp(
+        `<(${tagGroup})\\b[^>]*>[\\s\\S]*?<\\/\\1>`,
+        'gi'
+      );
+
+      html = html.replace(preserveRe, (m) => {
+        const i = preserved.length;
+        preserved.push(m);
+        return `___PRESERVE_${i}___`;
+      });
+
+      // 2) Optionally remove comments (keep conditional comments like <!--[if ...]> )
+      if (options.removeComments) {
+        html = html.replace(/<!--(?!\s*\[if|\s*<!\[endif)[\s\S]*?-->/gi, '');
+      }
+
+      // 3) Normalize line breaks to spaces so we can collapse cleanly
+      html = html.replace(/\r?\n/g, ' ');
+
+      if (options.collapseWhitespace) {
+        // collapse runs of whitespace to a single space
+        html = html.replace(/\s+/g, ' ');
+      }
+
+      // 4) Trim spaces between tags: "> <" -> "><"
+      html = html.replace(/>\s+</g, '><');
+
+      // 5) Tighten attribute spacing: ' = ' -> '=' (outside of quoted strings is hard, so we do a safe pass)
+      //    This keeps quotes intact, just removes extra spaces around '=' when they exist.
+      html = html.replace(/\s*=\s*/g, '=');
+
+      // 6) Trim leading/trailing whitespace
+      html = html.trim();
+
+      // 7) Restore preserved blocks exactly as they were
+      html = html.replace(
+        /___PRESERVE_(\d+)___/g,
+        (_, i) => preserved[Number(i)]
+      );
+
+      return html;
+    }
+
+    function htmlToConcatenatedString(html) {
+      // Find all tags and text separately
+      const parts = html.split(/(<\/?[^>]+>)/).filter(Boolean);
+
+      // Wrap each part in quotes
+      const wrapped = parts.map((part) => `"${part}"`);
+
+      // Join with +
+      return wrapped.join('+\n');
+    }
+
+    function ConvertAndShowOutPut() {
+      const firstElement = document.getElementById('htmlSyntax').value;
+      console.log(firstElement);
+      let minifiedHTML = minifyHTML(firstElement);
+      console.log(minifiedHTML);
+      if (minifiedHTML) {
+        const ConcatenatedString = htmlToConcatenatedString(minifiedHTML);
+        const outPutTxt = document.getElementById('output');
+        outPutTxt.value = ConcatenatedString;
+        outPutTxt.style.whiteSpace = 'pre-wrap';
+      }
+    }
+
+    function copyOutPut() {
+      // Get the text field
+      var copyText = document.getElementById('output');
+
+      // Select the text field
+      copyText.select();
+      copyText.setSelectionRange(0, 99999); // For mobile devices
+
+      // Copy the text inside the text field
+      navigator.clipboard.writeText(copyText.value);
+
+      // Alert the copied text
+      alert('Copied');
+    }
+  </script>
+</html>
