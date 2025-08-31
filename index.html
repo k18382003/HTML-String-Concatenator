@@ -64,6 +64,7 @@
       const tagGroup = options.preserveTags
         .join('|')
         .replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
       const preserveRe = new RegExp(
         `<(${tagGroup})\\b[^>]*>[\\s\\S]*?<\\/\\1>`,
         'gi'
@@ -111,8 +112,8 @@
       // Find all tags and text separately
       const parts = html.split(/(<\/?[^>]+>)/).filter(Boolean);
 
-      // Wrap each part in quotes
-      const wrapped = parts.map((part) => `"${part}"`);
+      // Wrap each part in quotes, and replace "" to '''
+      const wrapped = parts.map((part) => `"${part.replaceAll('"', "'")}"`);
 
       // Join with +
       return wrapped.join('+\n');
