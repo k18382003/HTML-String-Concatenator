@@ -12,11 +12,11 @@
         flex-direction: row;
       }
 
-      #htmlSyntax {
+      .input {
         width: 50%;
       }
 
-      #output {
+      .output {
         width: 50%;
         margin-left: 10px;
         height: 300px;
@@ -33,18 +33,44 @@
         width: 50%;
       }
     </style>
-    <p>Paste your HTML syntax:</p>
-    <div class="edit-area">
-      <textarea id="htmlSyntax" rows="20"></textarea>
-      <textarea id="output" rows="20" readonly></textarea>
-      <!-- <div id="output"></div> -->
-    </div>
-    <div class="buttons-container">
-      <div class="buttons">
-        <button onclick="ConvertAndShowOutPut()">Convert</button>
+    <dvi>
+      <p>Paste your HTML syntax:</p>
+      <div class="edit-area">
+        <textarea class="input" id="htmlSyntax" rows="20"></textarea>
+        <textarea
+          class="output"
+          id="stringOutput"
+          rows="20"
+          readonly
+        ></textarea>
       </div>
-      <div class="buttons">
-        <button onclick="copyOutPut()">Copy</button>
+      <div class="buttons-container">
+        <div class="buttons">
+          <button onclick="ConvertAndShowOutPut()">Convert to String</button>
+        </div>
+        <div class="buttons">
+          <button id="btnString" onclick="copyOutPut(this)">Copy</button>
+        </div>
+      </div>
+    </dvi>
+    <div>
+      <p>Paste your string:</p>
+      <div class="edit-area">
+        <textarea class="input" id="cleanString" rows="20"></textarea>
+        <textarea
+          class="output"
+          id="cleanString_output"
+          rows="20"
+          readonly
+        ></textarea>
+      </div>
+      <div class="buttons-container">
+        <div class="buttons">
+          <button onclick="StringToHTML()">Convert to HTML</button>
+        </div>
+        <div class="buttons">
+          <button id="btnHTML" onclick="copyOutPut(this)">Copy</button>
+        </div>
       </div>
     </div>
   </body>
@@ -123,28 +149,59 @@
       const firstElement = document.getElementById('htmlSyntax').value;
 
       let minifiedHTML = minifyHTML(firstElement);
-      console.log(minifiedHTML);
+
       if (minifiedHTML) {
         const ConcatenatedString = htmlToConcatenatedString(minifiedHTML);
-        const outPutTxt = document.getElementById('output');
+        const outPutTxt = document.getElementById('stringOutput');
         outPutTxt.value = ConcatenatedString;
         outPutTxt.style.whiteSpace = 'pre-wrap';
       }
     }
 
-    function copyOutPut() {
+    function StringToHTML() {
+      const cleanStringInput = document.getElementById('cleanString').value;
+      const convertedHTML = cleanString(cleanStringInput);
+      var cleanString_output = document.getElementById('cleanString_output');
+      cleanString_output.value = convertedHTML;
+    }
+
+    function copyOutPut(e) {
+      console.log(e.id);
+      console.log(e.id == 'btnString');
       // Get the text field
-      var copyText = document.getElementById('output');
+      switch (e.id) {
+        case 'btnString':
+          var copyText = document.getElementById('stringOutput');
+          break;
+        case 'btnHTML':
+          var copyText = document.getElementById('cleanString_output');
+          break;
+        default:
+          break;
+      }
 
-      // Select the text field
-      copyText.select();
-      copyText.setSelectionRange(0, 99999); // For mobile devices
+      if (copyText) {
+        // Select the text field
+        copyText.select();
+        copyText.setSelectionRange(0, 99999); // For mobile devices
 
-      // Copy the text inside the text field
-      navigator.clipboard.writeText(copyText.value);
+        // Copy the text inside the text field
+        navigator.clipboard.writeText(copyText.value);
 
-      // Alert the copied text
-      alert('Copied');
+        // Alert the copied text
+        alert('Copied');
+      }
+    }
+
+    function cleanString(jsString) {
+      // Remove all " + " joins (quotes + pluses between strings)
+      let cleaned = jsString.replace(/"\s*\+\s*"/g, '\n');
+
+      // Remove leading and trailing quotes if present
+      if (cleaned.startsWith('"')) cleaned = cleaned.slice(1);
+      if (cleaned.endsWith('"')) cleaned = cleaned.slice(0, -1);
+
+      return cleaned;
     }
   </script>
 </html>
